@@ -22,6 +22,9 @@ This system uses an **agentic workflow powered by LLMs** to:
 * 🧩 Modular tool-based architecture
 
 ---
+## Output Dashboard
+
+<img src="\AI_dashboard_agent\Screenshot_4-5-2026_105938_.jpeg" alt="Generated Dashboard">
 
 ## 🏗️ Architecture Overview
 
