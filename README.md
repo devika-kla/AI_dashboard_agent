@@ -24,7 +24,7 @@ This system uses an **agentic workflow powered by LLMs** to:
 ---
 ## Output Dashboard
 
-<img src="\AI_dashboard_agent\Screenshot_4-5-2026_105938_.jpeg" alt="Generated Dashboard">
+![Project Screenshot](Screenshot_4-5-2026_105938_.jpeg)
 
 ## 🏗️ Architecture Overview
 
