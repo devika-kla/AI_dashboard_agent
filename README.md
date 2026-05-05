@@ -84,6 +84,12 @@ GET /dashboard/preview/{session_id}
 
 Open in browser to view rendered dashboard.
 
+## Generated Output Dashboard
+input - 
+  "kpis": ["total revenue","monthly revenue","top customers","sales by country","top tracks","sales by genre","sales trend"]
+  
+![Project Screenshot](\outputs\user-008\Screenshot_4-5-2026_174247_.jpeg)
+
 ## 🧪 Test Cases (Multi-KPI Inputs)
 
 The agent is designed to handle multiple KPI keywords (5–6 at once) and generate a complete dashboard in a single run.
