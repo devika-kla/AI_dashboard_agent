@@ -1,45 +1,32 @@
-"""Pydantic schemas for API request and response payloads."""
+from typing import Optional
+from pydantic import BaseModel, field_validator
+# ── request / response models ───────────────────────────────
 
-from typing import Any
+class DashboardRequest(BaseModel):
+    kpis: list[str]
+    session_id: Optional[str] = None
+    verbose: bool = False
 
-from pydantic import BaseModel, Field
+    @field_validator("kpis")
+    @classmethod
+    def kpis_not_empty(cls, v: list[str]) -> list[str]:
+        cleaned = [k.strip() for k in v if k.strip()]
+        if not cleaned:
+            raise ValueError("kpis must contain at least one non-empty keyword")
+        return cleaned
 
-
-# ---------------------------------------------------------------------------
-# Request models
-# ---------------------------------------------------------------------------
-
-
-class DashboardQueryRequest(BaseModel):
-    query: str = Field(
-        ...,
-        min_length=5,
-        description="Natural language question to build a dashboard for.",
-        examples=["Show me monthly sales trends and top customers"],
-    )
-
-
-# ---------------------------------------------------------------------------
-# Response models
-# ---------------------------------------------------------------------------
-
-
-class Widget(BaseModel):
-    """A single dashboard panel returned by the agent."""
-
-    question: str
-    chart: str  # kpi | bar | line | pie | table
-    data: Any
-    insight: str
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "kpis": ["revenue", "top customers", "sales by country"],
+                "session_id": "user-abc-123",
+            }
+        }
+    }
 
 
-class DashboardQueryResponse(BaseModel):
-    html: str = Field(..., description="Complete HTML dashboard string.")
-    widgets: list[Widget] = Field(
-        default_factory=list,
-        description="Parsed widget metadata extracted from the agent run.",
-    )
-    intermediate_steps: list[Any] = Field(
-        default_factory=list,
-        description="Raw LangChain intermediate steps (tool calls + observations).",
-    )
+class DashboardResponse(BaseModel):
+    html: str
+    panel_count: int
+    execution_time_ms: int
+    session_id: Optional[str] = None

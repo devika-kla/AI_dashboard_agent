@@ -1,0 +1,11 @@
+{
+  "kpis": [
+    "monthly revenue",
+    "yearly sales trend",
+    "invoice trend",
+    "customer growth",
+    "revenue over time"
+  ],
+  "verbose": false,
+  "session_id": "user-006"
+}

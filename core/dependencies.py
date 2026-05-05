@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import HTTPException
 
 from config import settings
-from core.agent import build_agent
+from core.dashboard_agent import build_dashboard_agent
 from services.sql_service import SQLService
 
 _agent_executor = None
@@ -16,7 +16,7 @@ def get_agent_context():
     global _agent_executor, _db
     if _agent_executor is None or _db is None:
         try:
-            _agent_executor, _db = build_agent(db_path=settings.DB_PATH)
+            _agent_executor, _db = build_dashboard_agent(db_path=settings.DB_PATH)
         except Exception as error:
             raise HTTPException(
                 status_code=503,

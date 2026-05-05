@@ -1,224 +1,110 @@
-# 📊 AI Dashboard Agent (Backend)
+# 📊 AI KPI Dashboard Agent
 
-An intelligent backend service that converts natural language queries into fully interactive data dashboards.
+An AI-powered dashboard generation system that converts simple KPI keywords into a fully functional, self-contained HTML dashboard using SQL + LLM reasoning.
 
-This system uses an **agentic workflow powered by LLMs** to:
-
-* Understand user questions
-* Generate SQL queries
-* Extract insights
-* Automatically build a **self-contained HTML dashboard** with charts and tables
-
----
-
-## 🚀 Features
-
-* 🔍 Natural language → SQL query execution
-* 🧠 Agent-based reasoning (ReAct pattern)
-* 📈 Automatic chart selection (bar, line, pie, KPI, table)
-* 💡 Insight generation for visualizations
-* 🖥️ Fully rendered HTML dashboard (Chart.js)
-* 🌐 Auto-opens dashboard in browser
-* 🧩 Modular tool-based architecture
-
----
-## Output Dashboard
-
-<img src="\AI_dashboard_agent\Screenshot_4-5-2026_105938_.jpeg" alt="Generated Dashboard">
-
-## 🏗️ Architecture Overview
-
-```
-User Query
-    ↓
-Agent (LLM + Tools)
-    ↓
-1. Generate sub-questions
-2. Run SQL queries
-3. Generate insights
-    ↓
-Backend processing
-    ↓
-HTML Dashboard Generator
-    ↓
-Browser Rendering
-```
+Built using:
+- LangChain SQL Agent
+- OpenAI LLM
+- Chinook Dataset
+- FastAPI
+- Chart.js (for visualization)
 
 ---
 
-## 🧰 Tech Stack
+## 🚀 Overview
 
-* **FastAPI** – API framework
-* **LangChain** – Agent + tool orchestration
-* **OpenAI / LLM** – reasoning & generation
-* **SQLite** – database (Chinook sample DB)
-* **Chart.js** – frontend visualization (in HTML)
+This system allows users to input **KPI keywords** like:
+"revenue, churn, top customers"
 
----
-
-## 📂 Project Structure
-
-```
-backend/
-│
-├── core/
-│   └── agent.py                # Agent + prompt setup
-│
-├── services/
-│   ├── tool_registry.py       # Tool definitions
-│   ├── agent_service.py       # Agent execution logic
-│   └── response_service.py    # Parsing + HTML handling
-│
-├── db/
-│   └── connection.py          # DB + LLM initialization
-│
-├── models/
-│   └── agent_models.py        # Pydantic models
-│
-├── api/
-│   └── routes.py              # FastAPI endpoints
-│
-└── main.py                    # App entry point
-```
+And automatically:
+1. Plans dashboard panels (via LLM)
+2. Generates SQL queries
+3. Fetches data from database
+4. Builds a complete interactive dashboard (HTML)
 
 ---
 
-## ⚙️ Setup Instructions
+## 🧠 Architecture
+User Input (KPIs)
+↓
+kpi_planner (LLM)
+↓
+SQL Tools (LangChain Toolkit)
+↓
+dashboard_builder
+↓
+Final HTML Dashboard
 
-### 1. Clone the repository
-
-```bash
-git clone <your-repo-url>
-cd backend
-```
-
----
-
-### 2. Create virtual environment
-
-```bash
-python -m venv venv
-source venv/bin/activate   # Mac/Linux
-venv\Scripts\activate      # Windows
-```
 
 ---
 
-### 3. Install dependencies
+## 🧰 Tools Used
 
-```bash
-pip install -r requirements.txt
-```
+### 🔹 Built-in SQL Tools (LangChain)
+- `sql_db_list_tables`
+- `sql_db_schema`
+- `sql_db_query`
+- `sql_db_query_checker`
 
----
-
-### 4. Configure environment variables
-
-Create a `.env` file:
-
-```env
-OPENAI_API_KEY=your_api_key_here
-```
+### 🔹 Custom Tools
+- `kpi_planner`
+- `dashboard_builder`
 
 ---
 
-### 5. Run the server
-
-```bash
-uvicorn main:app --reload
-```
 
 ---
 
-## 📡 API Endpoint
+## ⚙️ API Endpoints
 
-### ▶️ Generate Dashboard
+### ▶️ Create Dashboard
 
-```http
 POST /dashboard
-```
 
-### Request Body
-
+#### Request:
 ```json
 {
-  "query": "Show me monthly sales trends and top customers"
+  "kpis": ["revenue", "top customers", "sales by country"],
+  "session_id": "test-123"
 }
 ```
 
----
-
-### Response
-
+#### Response:
 ```json
 {
-  "html": "<!DOCTYPE html>...",
-  "widgets": [...],
-  "intermediate_steps": [...]
+  "html": "<full dashboard html>",
+  "panel_count": 3,
+  "execution_time_ms": 1200,
+  "session_id": "test-123"
 }
 ```
 
----
+### 👀 Preview Dashboard
+GET /dashboard/preview/{session_id}
 
-## 🌐 How It Works
+Open in browser to view rendered dashboard.
 
-1. User sends a query
-2. Agent:
+## 🧪 Test Cases (Multi-KPI Inputs)
 
-   * Breaks into sub-questions
-   * Generates SQL
-   * Executes queries
-   * Produces insights
-3. Backend:
+The agent is designed to handle multiple KPI keywords (5–6 at once) and generate a complete dashboard in a single run.
 
-   * Reconstructs structured widget data
-   * Generates dashboard HTML
-4. System:
-
-   * Opens dashboard automatically in browser
-
----
-
-## 🧠 Agent Workflow
-
-The agent follows a structured pipeline:
-
-* `generate_dashboard_questions`
-* `sql_db_query`
-* `generate_insight`
-* `build_dashboard_html`
-
----
-
-## 📊 Output
-
-The system generates a **fully self-contained HTML dashboard** with:
-
-* KPI cards
-* Line / bar / pie charts
-* Data tables
-* Business insights
-
-No frontend required — runs directly in browser.
-
----
-
-## ⚠️ Notes
-
-* Currently uses SQLite (Chinook DB)
-* Only supports **read queries (SELECT)**
-* LLM output is validated and post-processed for stability
-* HTML generation includes fallback if agent fails
-
----
-
-## 🔮 Future Improvements
-
-* Filters & interactivity (date range, dropdowns)
-* Export dashboard (PDF / image)
-* Multi-database support
-* Frontend UI (React)
-* Saved dashboards
-
-
-
+🔹 1. Basic Mixed Dashboard
+["revenue", "customers", "invoices", "sales by country", "top customers"]
+🔹 2. Business Overview Dashboard
+["total revenue", "monthly sales", "top customers", "sales by country", "invoice count", "average invoice value"]
+🔹 3. Sales-Focused Dashboard
+["revenue over time", "top selling tracks", "sales by genre", "top customers", "revenue by country"]
+🔹 4. Customer Insights Dashboard
+["customer count", "top customers", "customers by country", "repeat customers", "average spend per customer"]
+🔹 5. Product / Music Analytics (Chinook-specific)
+["top tracks", "top artists", "sales by genre", "album performance", "track purchases", "revenue by artist"]
+🔹 6. Time-Series Heavy Dashboard
+["monthly revenue", "yearly sales trend", "invoice trend", "customer growth", "revenue over time"]
+🔹 7. Distribution + Ranking Mix
+["sales by country", "sales by genre", "top customers", "top tracks", "revenue distribution"]
+🔹 8. Stress Test (7 KPIs)
+["total revenue", "monthly revenue", "top customers", "sales by country", "top tracks", "sales by genre", "sales trend"]
+🔹 9. Synonym Robustness Test
+["income", "earnings", "client count", "purchases", "sales trend", "revenue distribution"]
+🔹 10. Noisy Input Test
+["revenue","abc xyz", "top customers", "???", "sales by country", "random metric"]

@@ -1,0 +1,11 @@
+{
+  "kpis": [
+    "revenue over time",
+    "top selling tracks",
+    "sales by genre",
+    "top customers",
+    "revenue by country"
+  ],
+  "verbose": false,
+  "session_id": "user-003"
+}
