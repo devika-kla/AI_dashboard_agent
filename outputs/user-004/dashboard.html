@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KPI Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #f8f8f6;
+    --surface:  #ffffff;
+    --border:   #e4e3dc;
+    --text-1:   #1a1a18;
+    --text-2:   #5f5e5a;
+    --text-3:   #888780;
+    --radius:   12px;
+    --shadow:   0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:      #1c1c1a;
+      --surface: #252523;
+      --border:  #38382e;
+      --text-1:  #e8e6de;
+      --text-2:  #b4b2a9;
+      --text-3:  #888780;
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text-1);
+    padding: 32px 24px;
+    min-height: 100vh;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text-1);
+    margin-bottom: 24px;
+    letter-spacing: -0.01em;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-3);
+    margin-bottom: 12px;
+  }
+
+  /* ── stat cards ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 20px 18px;
+    box-shadow: var(--shadow);
+  }
+
+  .stat-card .label {
+    font-size: 12px;
+    color: var(--text-2);
+    margin-bottom: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .stat-card .value {
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--text-1);
+  }
+
+  .stat-card .sub {
+    font-size: 11px;
+    color: var(--text-3);
+    margin-top: 6px;
+  }
+
+  /* ── chart panels ── */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+  }
+
+  .chart-card .chart-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-1);
+    margin-bottom: 4px;
+  }
+
+  .chart-card .chart-desc {
+    font-size: 12px;
+    color: var(--text-3);
+    margin-bottom: 16px;
+    line-height: 1.4;
+  }
+
+  .chart-card canvas {
+    width: 100% !important;
+    max-height: 280px;
+  }
+
+  /* ── failed panels ── */
+  .failed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 24px;
+  }
+
+  .failed-item {
+    font-size: 12px;
+    color: var(--text-3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+
+  .failed-item strong { color: var(--text-2); }
+</style>
+</head>
+<body>
+<h1>KPI Dashboard</h1>
+
+<div class="section-label">Key metrics</div>
+<div class="stat-grid">
+  <div class="stat-card" style="border-top: 3px solid rgba(127,119,221,1)">
+    <div class="label">Total Customer Count</div>
+    <div class="value">59</div>
+    <div class="sub">Displays the total number of unique customers in the database.</div>
+  </div>
+  <div class="stat-card" style="border-top: 3px solid rgba(29,158,117,1)">
+    <div class="label">Repeat Customer Count</div>
+    <div class="value">59</div>
+    <div class="sub">Counts the number of customers who have made more than one purchase, indicating customer loyalty.</div>
+  </div>
+  <div class="stat-card" style="border-top: 3px solid rgba(186,117,23,1)">
+    <div class="label">Average Spend per Customer</div>
+    <div class="value">39.47</div>
+    <div class="sub">Calculates the average amount spent by each customer, providing insight into customer value.</div>
+  </div>
+</div>
+<div class="section-label">Charts</div>
+<div class="chart-grid">
+  <div class="chart-card">
+    <div class="chart-title">Top Customers by Spend</div>
+    <div class="chart-desc">Shows the top customers based on their total spending, highlighting key revenue contributors.</div>
+    <canvas id="chart_top_customers_1511"></canvas>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Customers by Country</div>
+    <div class="chart-desc">Provides a breakdown of customers by country to understand geographical distribution.</div>
+    <canvas id="chart_customers_by_country_3047"></canvas>
+  </div>
+</div>
+
+
+<script>
+Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+Chart.defaults.font.size = 12;
+Chart.defaults.color = getComputedStyle(document.documentElement)
+  .getPropertyValue('--text-2').trim() || '#5f5e5a';
+
+const configs = [{"id": "chart_top_customers_1511", "config": {"type": "bar", "data": {"labels": ["6", "26", "57", "45", "46", "24", "28", "37", "7", "25", "44", "5", "43", "48", "1", "3", "4", "17", "20", "22", "34", "42", "15", "19", "39", "40", "51", "58", "2", "8", "9", "10", "11", "12", "13", "14", "16", "18", "21", "23", "27", "29", "30", "31", "32", "33", "35", "36", "38", "41"], "datasets": [{"label": "CustomerName", "data": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], "backgroundColor": "rgba(127,119,221,0.75)", "borderColor": "rgba(127,119,221,1)", "borderWidth": 1.5, "tension": 0}, {"label": "TotalSpend", "data": [49.62, 47.62, 46.62, 45.62, 45.62, 43.62, 43.62, 43.62, 42.62, 42.62, 41.62, 40.62, 40.62, 40.62, 39.62, 39.62, 39.62, 39.62, 39.62, 39.62, 39.62, 39.62, 38.62, 38.62, 38.62, 38.62, 38.62, 38.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62], "backgroundColor": "rgba(29,158,117,0.75)", "borderColor": "rgba(29,158,117,1)", "borderWidth": 1.5, "tension": 0}]}, "options": {"responsive": true, "maintainAspectRatio": true, "plugins": {"legend": {"display": false, "position": "bottom"}, "title": {"display": false}}, "scales": {"x": {"ticks": {"maxRotation": 45, "autoSkip": true, "maxTicksLimit": 12}, "grid": {"display": false}}, "y": {"beginAtZero": true, "ticks": {"maxTicksLimit": 6}, "grid": {"color": "rgba(136,135,128,0.15)"}}}}}}, {"id": "chart_customers_by_country_3047", "config": {"type": "doughnut", "data": {"labels": ["USA", "Canada", "France", "Brazil", "Germany", "United Kingdom", "Portugal", "India", "Czech Republic", "Sweden", "Spain", "Poland", "Norway", "Netherlands", "Italy", "Ireland", "Hungary", "Finland", "Denmark", "Chile", "Belgium", "Austria", "Australia", "Argentina"], "datasets": [{"data": [13.0, 8.0, 5.0, 5.0, 4.0, 3.0, 2.0, 2.0, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], "backgroundColor": ["rgba(127,119,221,0.75)", "rgba(29,158,117,0.75)", "rgba(186,117,23,0.75)", "rgba(216,90,48,0.75)", "rgba(55,138,221,0.75)", "rgba(99,153,34,0.75)", "rgba(212,83,126,0.75)", "rgba(127,119,221,0.75)", "rgba(29,158,117,0.75)", "rgba(186,117,23,0.75)", "rgba(216,90,48,0.75)", "rgba(55,138,221,0.75)", "rgba(99,153,34,0.75)", "rgba(212,83,126,0.75)", "rgba(127,119,221,0.75)", "rgba(29,158,117,0.75)", "rgba(186,117,23,0.75)", "rgba(216,90,48,0.75)", "rgba(55,138,221,0.75)", "rgba(99,153,34,0.75)", "rgba(212,83,126,0.75)", "rgba(127,119,221,0.75)", "rgba(29,158,117,0.75)", "rgba(186,117,23,0.75)"], "borderWidth": 1}]}, "options": {"responsive": true, "maintainAspectRatio": true, "plugins": {"legend": {"display": true, "position": "bottom"}, "title": {"display": false}}, "scales": {}}}}];
+
+configs.forEach(function(cfg) {
+  const canvas = document.getElementById(cfg.id);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  new Chart(ctx, cfg.config);
+});
+</script>
+</body>
+</html>

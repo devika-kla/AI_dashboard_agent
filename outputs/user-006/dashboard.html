@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KPI Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #f8f8f6;
+    --surface:  #ffffff;
+    --border:   #e4e3dc;
+    --text-1:   #1a1a18;
+    --text-2:   #5f5e5a;
+    --text-3:   #888780;
+    --radius:   12px;
+    --shadow:   0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text-1);
+    padding: 32px 24px;
+    min-height: 100vh;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text-1);
+    margin-bottom: 24px;
+    letter-spacing: -0.01em;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-3);
+    margin-bottom: 12px;
+  }
+
+  /* ── stat cards ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 20px 18px;
+    box-shadow: var(--shadow);
+  }
+
+  .stat-card .label {
+    font-size: 12px;
+    color: var(--text-2);
+    margin-bottom: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .stat-card .value {
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--text-1);
+  }
+
+  .stat-card .sub {
+    font-size: 11px;
+    color: var(--text-3);
+    margin-top: 6px;
+  }
+
+  /* ── chart panels ── */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+  }
+
+  .chart-card .chart-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-1);
+    margin-bottom: 4px;
+  }
+
+  .chart-card .chart-desc {
+    font-size: 12px;
+    color: var(--text-3);
+    margin-bottom: 16px;
+    line-height: 1.4;
+  }
+
+  .chart-card canvas {
+    width: 100% !important;
+    max-height: 280px;
+  }
+
+  /* ── failed panels ── */
+  .failed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 24px;
+  }
+
+  .failed-item {
+    font-size: 12px;
+    color: var(--text-3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+
+  .failed-item strong { color: var(--text-2); }
+</style>
+</head>
+<body>
+<h1>KPI Dashboard</h1>
+
+<div class="section-label">Key metrics</div>
+<div class="stat-grid">
+  <div class="stat-card" style="border-top: 3px solid rgba(127,119,221,1)">
+    <div class="label">Customer Growth</div>
+    <div class="value">59</div>
+    <div class="sub">Growth in the number of customers over time to assess market expansion.</div>
+  </div>
+</div>
+<div class="section-label">Charts</div>
+<div class="chart-grid">
+  <div class="chart-card">
+    <div class="chart-title">Monthly Revenue</div>
+    <div class="chart-desc">Total revenue generated each month to identify monthly sales patterns.</div>
+    <canvas id="chart_monthly_revenue_37904"></canvas>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Yearly Sales Trend</div>
+    <div class="chart-desc">Annual sales totals to observe long-term sales growth or decline.</div>
+    <canvas id="chart_yearly_sales_trend_63812"></canvas>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Invoice Trend</div>
+    <div class="chart-desc">Number of invoices issued over time to track billing activity.</div>
+    <canvas id="chart_invoice_trend_34768"></canvas>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Revenue Over Time</div>
+    <div class="chart-desc">Total revenue over time to evaluate financial performance trends.</div>
+    <canvas id="chart_revenue_over_time_62404"></canvas>
+  </div>
+</div>
+
+
+<script>
+Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+Chart.defaults.font.size = 12;
+//Chart.defaults.color = getComputedStyle(document.documentElement)
+// .getPropertyValue('--text-2').trim() || '#5f5e5a';
+
+// Force light theme for charts
+Chart.defaults.color = '#5f5e5a';          // axis + labels
+Chart.defaults.borderColor = '#e4e3dc';   // grid lines
+Chart.defaults.backgroundColor = '#ffffff';
+const configs = [{"id": "chart_monthly_revenue_37904", "config": {"type": "line", "data": {"labels": ["2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02"], "datasets": [{"label": "Revenue", "data": [35.64, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 52.62, 46.62, 44.62, 37.62, 37.62, 37.62, 37.62, 37.62, 36.63, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 51.62, 42.62, 50.62, 37.62, 37.62, 37.62, 37.62, 23.76, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 39.62, 47.62, 46.71, 42.62, 37.62, 37.62, 37.62, 27.72], "backgroundColor": "rgba(127,119,221,0.75)", "borderColor": "rgba(127,119,221,1)", "borderWidth": 1.5, "fill": true, "tension": 0.3}]}, "options": {"responsive": true, "maintainAspectRatio": true, "plugins": {"legend": {"display": false, "position": "bottom"}, "title": {"display": false}}, "scales": {"x": {"ticks": {"maxRotation": 45, "autoSkip": true, "maxTicksLimit": 12}, "grid": {"display": false}}, "y": {"beginAtZero": true, "ticks": {"maxTicksLimit": 6}, "grid": {"color": "rgba(136,135,128,0.15)"}}}}}}, {"id": "chart_yearly_sales_trend_63812", "config": {"type": "line", "data": {"labels": ["2021", "2022", "2023", "2024", "2025"], "datasets": [{"label": "Revenue", "data": [449.46, 481.45, 469.58, 477.53, 450.58], "backgroundColor": "rgba(29,158,117,0.75)", "borderColor": "rgba(29,158,117,1)", "borderWidth": 1.5, "fill": true, "tension": 0.3}]}, "options": {"responsive": true, "maintainAspectRatio": true, "plugins": {"legend": {"display": false, "position": "bottom"}, "title": {"display": false}}, "scales": {"x": {"ticks": {"maxRotation": 45, "autoSkip": true, "maxTicksLimit": 12}, "grid": {"display": false}}, "y": {"beginAtZero": true, "ticks": {"maxTicksLimit": 6}, "grid": {"color": "rgba(136,135,128,0.15)"}}}}}}, {"id": "chart_invoice_trend_34768", "config": {"type": "line", "data": {"labels": ["2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02"], "datasets": [{"label": "InvoiceCount", "data": [6.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 6.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 6.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 6.0, 7.0, 7.0, 7.0, 7.0, 5.0], "backgroundColor": "rgba(186,117,23,0.75)", "borderColor": "rgba(186,117,23,1)", "borderWidth": 1.5, "fill": true, "tension": 0.3}]}, "options": {"responsive": true, "maintainAspectRatio": true, "plugins": {"legend": {"display": false, "position": "bottom"}, "title": {"display": false}}, "scales": {"x": {"ticks": {"maxRotation": 45, "autoSkip": true, "maxTicksLimit": 12}, "grid": {"display": false}}, "y": {"beginAtZero": true, "ticks": {"maxTicksLimit": 6}, "grid": {"color": "rgba(136,135,128,0.15)"}}}}}}, {"id": "chart_revenue_over_time_62404", "config": {"type": "line", "data": {"labels": ["2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02"], "datasets": [{"label": "Revenue", "data": [35.64, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 52.62, 46.62, 44.62, 37.62, 37.62, 37.62, 37.62, 37.62, 36.63, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 51.62, 42.62, 50.62, 37.62, 37.62, 37.62, 37.62, 23.76, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 37.62, 39.62, 47.62, 46.71, 42.62, 37.62, 37.62, 37.62, 27.72], "backgroundColor": "rgba(216,90,48,0.75)", "borderColor": "rgba(216,90,48,1)", "borderWidth": 1.5, "fill": true, "tension": 0.3}]}, "options": {"responsive": true, "maintainAspectRatio": true, "plugins": {"legend": {"display": false, "position": "bottom"}, "title": {"display": false}}, "scales": {"x": {"ticks": {"maxRotation": 45, "autoSkip": true, "maxTicksLimit": 12}, "grid": {"display": false}}, "y": {"beginAtZero": true, "ticks": {"maxTicksLimit": 6}, "grid": {"color": "rgba(136,135,128,0.15)"}}}}}}];
+
+configs.forEach(function(cfg) {
+  const canvas = document.getElementById(cfg.id);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  new Chart(ctx, cfg.config);
+});
+</script>
+</body>
+</html>
