@@ -88,7 +88,7 @@ Open in browser to view rendered dashboard.
 input - 
   "kpis": ["total revenue","monthly revenue","top customers","sales by country","top tracks","sales by genre","sales trend"]
   
-![Project Screenshot](\outputs\user-008\Screenshot_4-5-2026_174247_.jpeg)
+![Project Screenshot](outputs/user-008/Screenshot_4-5-2026_174247_.jpeg)
 
 ## 🧪 Test Cases (Multi-KPI Inputs)
 
