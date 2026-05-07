@@ -1,0 +1,12 @@
+{
+  "kpis": [
+    "revenue",
+    "abc xyz",
+    "top customers",
+    "???",
+    "sales by country",
+    "random metric"
+  ],
+  "verbose": false,
+  "session_id": "user-010"
+}

@@ -1,0 +1,12 @@
+{
+  "kpis": [
+    "income",
+    "earnings",
+    "client count",
+    "purchases",
+    "sales trend",
+    "revenue distribution"
+  ],
+  "verbose": false,
+  "session_id": "user-009"
+}

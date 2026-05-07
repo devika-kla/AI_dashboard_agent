@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import re
+from services.kpi_planner import _strip_fences
 
 
 # Chart.js color palette — cycles across panels
@@ -39,7 +40,8 @@ def build_dashboard(panels_json: str) -> str:
     Returns JSON: { "html": "...", "panel_count": N }
     """
     try:
-        panels = json.loads(panels_json)
+        clean = _strip_fences(panels_json)
+        panels = json.loads(clean)
         if not isinstance(panels, list):
             panels = [panels]
     except Exception as exc:
