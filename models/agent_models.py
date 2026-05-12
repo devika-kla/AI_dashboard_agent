@@ -4,7 +4,6 @@ from pydantic import BaseModel, field_validator
 
 class DashboardRequest(BaseModel):
     kpis: list[str]
-    session_id: Optional[str] = None
     verbose: bool = False
 
     @field_validator("kpis")
@@ -19,7 +18,7 @@ class DashboardRequest(BaseModel):
         "json_schema_extra": {
             "example": {
                 "kpis": ["revenue", "top customers", "sales by country"],
-                "session_id": "user-abc-123",
+                "verbose": False
             }
         }
     }
@@ -27,6 +26,4 @@ class DashboardRequest(BaseModel):
 
 class DashboardResponse(BaseModel):
     html: str
-    panel_count: int
     execution_time_ms: int
-    session_id: Optional[str] = None

@@ -114,3 +114,54 @@ The agent is designed to handle multiple KPI keywords (5–6 at once) and genera
 ["income", "earnings", "client count", "purchases", "sales trend", "revenue distribution"]
 🔹 10. Noisy Input Test
 ["revenue","abc xyz", "top customers", "???", "sales by country", "random metric"]
+
+
+## 🖥️ Run Services Separately
+
+### Setup (Do this once):
+
+```bash
+# Activate virtual environment
+# Windows:
+.venv\Scripts\Activate.ps1
+
+# macOS/Linux:
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Terminal 1 - Backend:
+```bash
+# Activate venv (if not already)
+.venv\Scripts\Activate.ps1  # Windows
+# OR
+source venv/bin/activate  # macOS/Linux
+
+# Start backend
+uvicorn main:app --port 8000 --reload
+```
+
+### Terminal 2 - Frontend:
+```bash
+# Activate venv (if not already)
+.venv\Scripts\Activate.ps1  # Windows
+# OR
+source venv/bin/activate  # macOS/Linux
+
+# Start frontend
+streamlit run frontend/streamlit_app.py --server.port 8501
+```
+
+---
+
+## 🌐 Access Your Application
+
+| Service | URL |
+|---------|-----|
+| **Frontend (UI)** | http://localhost:8501 |
+| **Backend (API)** | http://localhost:8000 |
+| **API Documentation** | http://localhost:8000/docs |
+
+---
