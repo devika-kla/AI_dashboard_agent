@@ -48,7 +48,7 @@ The application uses a **3-node LangGraph workflow** with a conditional error ro
 
 ### Agent Graph
 
-![LangGraph Agent Flow](langgraph_flow.jpg)
+![LangGraph Agent Flow](langgraph_flow.png)
 
 ```
 __start__
