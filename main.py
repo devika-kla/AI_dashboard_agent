@@ -1,21 +1,42 @@
-import logging
+"""Compatibility entrypoint for running the API."""
 
-from fastapi import FastAPI
-from api.dashboard import router
 import uvicorn
+from config import settings
+from core.constants import APP_DESCRIPTION, APP_TITLE, APP_VERSION
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from api import api_router
 
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s"
-)
+def create_app() -> FastAPI:
 
-logger = logging.getLogger(__name__)
+    app = FastAPI(
+        title=APP_TITLE,
+        description=APP_DESCRIPTION,
+        version=APP_VERSION,
+        docs_url="/docs",
+        redoc_url="/redoc",
+    )
 
-app = FastAPI()
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    app.include_router(api_router)
+    return app
 
-app.include_router(router)
+
+app = create_app()
+
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        "main:app",
+        host=settings.API_HOST,
+        port=settings.API_PORT,
+        reload=settings.DEBUG,
+    )

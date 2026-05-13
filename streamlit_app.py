@@ -1,427 +1,150 @@
-import requests
+"""
+Streamlit Frontend for AI Dashboard Agent
+Generate KPI dashboards with natural language
+"""
+
 import streamlit as st
-import plotly.graph_objects as go
+import requests
+import uuid
+from typing import Optional
 
-API_URL = "http://localhost:8000/generate-dashboard"
-
-# =====================================================
-# PAGE CONFIG
-# =====================================================
+# ── Page Configuration ──────────────────────────────────────
 
 st.set_page_config(
-    page_title="AI KPI Dashboard",
-    layout="wide",
+    page_title="AI Dashboard Agent",
+    page_icon="📊",
+    layout="wide"
 )
 
-# =====================================================
-# CUSTOM CSS
-# =====================================================
+# ── Simple Custom CSS ──────────────────────────────────────
 
 st.markdown("""
-<style>
-
-.main {
-    background-color: #f4f7fb;
-}
-
-.block-container {
-    padding-top: 2rem;
-    padding-left: 2rem;
-    padding-right: 2rem;
-    padding-bottom: 3rem;
-}
-
-/* HERO */
-
-.hero {
-    padding: 1rem 0 2rem 0;
-}
-
-.hero-title {
-    font-size: 3rem;
-    font-weight: 800;
-    color: #0f172a;
-    margin-bottom: 0.3rem;
-}
-
-.hero-subtitle {
-    font-size: 1.1rem;
-    color: #64748b;
-}
-
-/* SECTION TITLE */
-
-.section-title {
-    font-size: 2rem;
-    font-weight: 800;
-    color: #0f172a;
-    margin-top: 2rem;
-    margin-bottom: 1.5rem;
-}
-
-/* KPI CARD */
-
-.kpi-card {
-    background: white;
-    border-radius: 22px;
-    padding: 1.5rem;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 4px 18px rgba(0,0,0,0.05);
-    min-height: 140px;
-}
-
-.kpi-title {
-    font-size: 1rem;
-    color: #64748b;
-    margin-bottom: 1rem;
-}
-
-.kpi-value {
-    font-size: 2.7rem;
-    font-weight: 800;
-    color: #0f172a;
-}
-
-/* CHART CARD */
-
-.chart-header {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 1rem;
-}
-
-/* BUTTON */
-
-.stButton > button {
-    background: #2563eb;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    padding: 0.7rem 1.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-.stButton > button:hover {
-    background: #1d4ed8;
-}
-
-/* TEXT AREA */
-
-textarea {
-    border-radius: 14px !important;
-}
-
-</style>
+    <style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .main-header {
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+        color: white;
+        margin-bottom: 30px;
+    }
+    .main-header h1 {
+        margin: 0;
+        font-size: 2.5rem;
+    }
+    </style>
 """, unsafe_allow_html=True)
-# =====================================================
-# HERO SECTION
-# =====================================================
+
+# ── API Configuration ──────────────────────────────────────
+
+API_URL = st.secrets.get("API_URL", "http://localhost:8000")
+DASHBOARD_ENDPOINT = f"{API_URL}/dashboard"
+
+# ── Session State Initialization ──────────────────────────
+
+if "session_id" not in st.session_state:
+    st.session_state.session_id = f"session-{uuid.uuid4().hex[:12]}"
+
+if "dashboard_html" not in st.session_state:
+    st.session_state.dashboard_html = None
+
+# ── Helper Functions ──────────────────────────────────────
+
+def call_dashboard_api(kpis: list[str]) -> Optional[dict]:
+    """Call the backend API to generate a dashboard."""
+    try:
+        payload = {
+            "kpis": kpis,
+            "session_id": st.session_state.session_id,
+            "verbose": False
+        }
+        
+        with st.spinner("⏳ Generating your dashboard..."):
+            response = requests.post(
+                DASHBOARD_ENDPOINT,
+                json=payload,
+                timeout=120
+            )
+            
+        if response.status_code == 200:
+            return response.json()
+        else:
+            st.error(f"❌ API Error: {response.status_code}")
+            if response.text:
+                st.error(f"Details: {response.text}")
+            return None
+            
+    except requests.exceptions.ConnectionError:
+        st.error(f"❌ Cannot connect to backend at {API_URL}")
+        st.info("Make sure the backend is running: `uvicorn main:app --port 8000`")
+        return None
+    except Exception as e:
+        st.error(f"❌ Error: {str(e)}")
+        return None
+
+# ── Header ──────────────────────────────────────────────
 
 st.markdown("""
-<div class="hero">
-    <div class="hero-title">
-        AI KPI Dashboard
-    </div>
-    <div class="hero-subtitle">
-        Interactive analytics powered by AI + SQL
-    </div>
+<div class="main-header">
+    <h1>📊 AI Dashboard Agent</h1>
+    <p>Generate beautiful KPI dashboards from natural language</p>
 </div>
 """, unsafe_allow_html=True)
 
-# =====================================================
-# INPUT
-# =====================================================
+# ── Main Content ──────────────────────────────────────────
 
-kpi_input = st.text_area(
-    "Enter KPIs (comma separated)",
-    value="monthly sales, top customers, revenue by country",
-    height=120
-)
-
-# =====================================================
-# GENERATE BUTTON
-# =====================================================
-
-if st.button("Generate Dashboard"):
-
-    with st.spinner("Generating dashboard..."):
-
-        kpis = [
-            k.strip()
-            for k in kpi_input.split(",")
-            if k.strip()
-        ]
-
-        payload = {
-            "kpis": kpis
-        }
-
-        response = requests.post(
-            API_URL,
-            json=payload
+if st.session_state.dashboard_html is None:
+    # Input Section
+    col1, col2 = st.columns([3, 1])
+    
+    with col1:
+        kpi_input = st.text_input(
+            "📝 Enter KPIs (comma-separated)",
+            placeholder="e.g., revenue, churn rate, top customers",
+            key="kpi_input"
         )
-
-        # =========================================
-        # ERROR
-        # =========================================
-
-        if response.status_code != 200:
-
-            st.error(f"API Error: {response.text}")
-
-        # =========================================
-        # SUCCESS
-        # =========================================
-
+    
+    with col2:
+        st.write("")
+        st.write("")
+        submit_button = st.button("🚀 Generate", use_container_width=True, type="primary")
+    
+    st.markdown("---")
+    
+    # Process Request
+    if submit_button:
+        if kpi_input:
+            kpis = [k.strip() for k in kpi_input.split(",") if k.strip()]
+            if kpis:
+                result = call_dashboard_api(kpis)
+                if result:
+                    st.session_state.dashboard_html = result['html']
+                    st.rerun()
+            else:
+                st.error("Please enter at least one KPI")
         else:
+            st.error("Please enter KPIs")
 
-            dashboard = response.json()
-
-            sections = dashboard.get("sections", [])
-
-            # =========================================
-            # RENDER EACH KPI SECTION
-            # =========================================
-
-            for section in sections:
-
-                st.markdown(
-                    f"""
-                    <div class="section-title">
-                        {section['kpi'].title()}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-                widgets = section.get("widgets", [])
-
-                # -------------------------------------
-                # Separate Metrics & Charts
-                # -------------------------------------
-
-                metric_widgets = [
-                    w for w in widgets
-                    if w["chart_type"] == "metric"
-                ]
-
-                chart_widgets = [
-                    w for w in widgets
-                    if w["chart_type"] != "metric"
-                ]
-
-                # =====================================
-                # KPI CARDS ROW
-                # =====================================
-
-                if metric_widgets:
-
-                    cols_count = min(len(metric_widgets), 4)
-
-                    metric_cols = st.columns(cols_count)
-
-                    for idx, widget in enumerate(metric_widgets):
-
-                        col = metric_cols[idx % cols_count]
-
-                        with col:
-
-                            data = widget.get("data", [])
-
-                            value = "N/A"
-
-                            if data:
-
-                                first_row = data[0]
-
-                                value = list(first_row.values())[-1]
-                                
-                                # format numbers nicely
-                                if isinstance(value, float):
-                                    value = f"{value:,.2f}"
-
-                                elif isinstance(value, int):
-                                    value = f"{value:,}"
-
-                            st.markdown(
-                                f"""
-                                <div class="kpi-card">
-                                    <div class="kpi-title">
-                                        {widget['title']}
-                                    </div>
-                                    <div class="kpi-value">
-                                        {value}
-                                    </div>
-                                </div>
-                                """,
-                                unsafe_allow_html=True
-                            )
-
-                st.markdown(
-                    "<div style='height:20px'></div>",
-                    unsafe_allow_html=True
-                )
-
-                # =====================================
-                # CHART GRID
-                # =====================================
-
-                if chart_widgets:
-
-                    for i in range(0, len(chart_widgets), 2):
-
-                        row_widgets = chart_widgets[i:i + 2]
-
-                        cols = st.columns(2)
-
-                        for col_idx, widget in enumerate(row_widgets):
-
-                            with cols[col_idx]:
-
-                                chart_container = st.container(border=True)
-
-                                with chart_container:
-
-                                    st.markdown(
-                                        f"""
-                                        <div class="chart-header">
-                                            {widget['title']}
-                                        </div>
-                                        """,
-                                        unsafe_allow_html=True
-                                    )
-
-                                    data = widget.get("data", [])
-
-                                    chart_type = widget.get(
-                                        "chart_type",
-                                        "bar"
-                                    )
-
-                                    if not data:
-
-                                        st.info("No data available")
-                                        continue
-
-                                    columns = list(data[0].keys())
-
-                                    x_col = columns[0]
-
-                                    y_col = (
-                                        columns[1]
-                                        if len(columns) > 1
-                                        else None
-                                    )
-
-                                    fig = go.Figure()
-
-                                    # =================================
-                                    # LINE CHART
-                                    # =================================
-
-                                    if chart_type == "line":
-
-                                        fig.add_trace(
-                                            go.Scatter(
-                                                x=[
-                                                    row[x_col]
-                                                    for row in data
-                                                ],
-                                                y=[
-                                                    row[y_col]
-                                                    for row in data
-                                                ],
-                                                mode="lines+markers",
-                                            )
-                                        )
-
-                                    # =================================
-                                    # BAR CHART
-                                    # =================================
-
-                                    elif chart_type == "bar":
-
-                                        fig.add_trace(
-                                            go.Bar(
-                                                x=[
-                                                    row[x_col]
-                                                    for row in data
-                                                ],
-                                                y=[
-                                                    row[y_col]
-                                                    for row in data
-                                                ],
-                                            )
-                                        )
-
-                                        fig.update_xaxes(
-                                            tickangle=-35
-                                        )
-
-                                    # =================================
-                                    # PIE CHART
-                                    # =================================
-
-                                    elif chart_type == "pie":
-
-                                        fig.add_trace(
-                                            go.Pie(
-                                                labels=[
-                                                    row[x_col]
-                                                    for row in data
-                                                ],
-                                                values=[
-                                                    row[y_col]
-                                                    for row in data
-                                                ],
-                                                hole=0.45,
-                                            )
-                                        )
-
-                                    # =================================
-                                    # TABLE
-                                    # =================================
-
-                                    elif chart_type == "table":
-
-                                        st.dataframe(
-                                            data,
-                                            use_container_width=True,
-                                            height=420
-                                        )
-
-                                        continue
-
-                                    # =================================
-                                    # FIGURE LAYOUT
-                                    # =================================
-
-                                    fig.update_layout(
-                                        height=420,
-                                        paper_bgcolor="white",
-                                        plot_bgcolor="white",
-                                        margin=dict(
-                                            l=10,
-                                            r=10,
-                                            t=10,
-                                            b=10,
-                                        ),
-                                        font=dict(
-                                            family="Inter",
-                                            size=14,
-                                            color="#111827"
-                                        ),
-                                    )
-
-                                    st.plotly_chart(
-                                        fig,
-                                        use_container_width=True
-                                    )
-                                    
-
-                st.markdown(
-                    "<div style='height:40px'></div>",
-                    unsafe_allow_html=True
-                )
+else:
+    # Display the Generated Dashboard
+    st.components.v1.html(st.session_state.dashboard_html, height=900, scrolling=True)
+    
+    st.markdown("---")
+    
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        if st.button("🔄 Generate Another Dashboard"):
+            st.session_state.dashboard_html = None
+            st.session_state.session_id = f"session-{uuid.uuid4().hex[:12]}"
+            st.rerun()
+    
+    with col2:
+        st.download_button(
+            label="⬇️ Download HTML",
+            data=st.session_state.dashboard_html,
+            file_name=f"dashboard_{st.session_state.session_id}.html",
+            mime="text/html",
+            use_container_width=True
+        )

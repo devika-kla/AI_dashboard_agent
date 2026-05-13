@@ -1,11 +1,22 @@
-fastapi
-uvicorn
-streamlit
-openai
-langchain-openai
-langchain-community
-sqlalchemy
-pydantic
-plotly
-pandas
-python-dotenv
+# Core LangChain
+langchain==0.3.25
+langchain-community==0.3.23
+langchain-openai==0.3.16
+
+# OpenAI SDK
+openai==1.77.0
+
+# FastAPI + server
+fastapi==0.115.12
+uvicorn[standard]==0.34.0
+
+# Database
+sqlalchemy==2.0.40
+
+# Config
+pydantic-settings==2.9.1
+python-dotenv==1.1.0
+
+# Frontend
+streamlit==1.37.0
+requests==2.32.3
