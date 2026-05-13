@@ -1,167 +1,295 @@
-# 📊 AI KPI Dashboard Agent
+# 📊 AI KPI Dashboard Generator
 
-An AI-powered dashboard generation system that converts simple KPI keywords into a fully functional, self-contained HTML dashboard using SQL + LLM reasoning.
-
-Built using:
-- LangChain SQL Agent
-- OpenAI LLM
-- Chinook Dataset
-- FastAPI
-- Chart.js (for visualization)
+An AI-powered dashboard generation system that converts natural language KPI requests into interactive, data-driven dashboards — powered by an LLM, a FastAPI backend, a Streamlit frontend, and the Chinook SQLite dataset.
 
 ---
 
-## 🚀 Overview
+## ✨ Features
 
-This system allows users to input **KPI keywords** like:
-"revenue, churn, top customers"
-
-And automatically:
-1. Plans dashboard panels (via LLM)
-2. Generates SQL queries
-3. Fetches data from database
-4. Builds a complete interactive dashboard (HTML)
-
----
-
-## 🧠 Architecture
-User Input (KPIs)
-↓
-kpi_planner (LLM)
-↓
-SQL Tools (LangChain Toolkit)
-↓
-dashboard_builder
-↓
-Final HTML Dashboard
-
+- **Natural language KPI input** — describe what you want to see, not how to query it
+- **Dynamic SQL generation** — LLM writes SQLite-compatible SELECT queries on the fly
+- **Single LLM call architecture** — fast, reliable, and cost-efficient (no agent loops)
+- **Multiple chart types per KPI** — line, bar, pie, metric cards, and tables
+- **Interactive Plotly visualizations** — rendered live in Streamlit
+- **FastAPI backend API** — clean REST endpoint for dashboard generation
+- **Lightweight & maintainable** — no LangChain, no tool-calling, minimal dependencies
 
 ---
 
-## 🧰 Tools Used
+## 🛠️ Tech Stack
 
-### 🔹 Built-in SQL Tools (LangChain)
-- `sql_db_list_tables`
-- `sql_db_schema`
-- `sql_db_query`
-- `sql_db_query_checker`
-
-### 🔹 Custom Tools
-- `kpi_planner`
-- `dashboard_builder`
-
----
-
+| Layer             | Technology         |
+|-------------------|--------------------|
+| Frontend          | Streamlit          |
+| Backend API       | FastAPI            |
+| LLM               | OpenAI GPT         |
+| Database          | SQLite (Chinook)   |
+| Visualization     | Plotly             |
+| ORM / DB Access   | SQLAlchemy         |
+| Config Management | Pydantic Settings  |
 
 ---
 
-## ⚙️ API Endpoints
+## 📁 Project Structure
 
-### ▶️ Create Dashboard
+```
+project/
+│
+├── api/
+│   └── routes.py
+│
+├── core/
+│   ├── prompts.py
+│   └── llm.py
+│
+├── db/
+│   └── chinook.db
+│
+├── models/
+│   └── dashboard_models.py
+│
+├── services/
+│   ├── dashboard_service.py
+│   ├── database_service.py
+│   └── schema_service.py
+│
+├── main.py
+├── config.py
+├── streamlit_app.py
+├── requirements.txt
+└── README.md
+```
 
-POST /dashboard
+---
 
-#### Request:
+## 🏗️ Architecture
+
+### High-Level Flow
+
+```
+User (Streamlit UI)
+        ↓
+FastAPI Endpoint
+        ↓
+Dashboard Service
+        ↓
+OpenAI LLM
+        ↓
+Dashboard Spec (JSON)
+        ↓
+SQL Execution
+        ↓
+Data Injection
+        ↓
+Frontend Rendering
+```
+
+### Detailed Workflow
+
+#### 1. User Inputs KPIs
+
+The user types one or more KPIs into the Streamlit interface. Example:
+
+```
+monthly sales, top customers, revenue by country
+```
+
+The request is sent from Streamlit to the FastAPI backend.
+
+#### 2. LLM Generates Dashboard Spec
+
+A **single LLM call** generates the complete dashboard specification, including:
+
+- Dashboard title
+- Sections (one per KPI)
+- Widgets (charts, metrics, tables)
+- Chart types
+- SQL queries
+
+Example LLM output:
+
 ```json
 {
-  "kpis": ["revenue", "top customers", "sales by country"],
-  "session_id": "test-123"
+  "dashboard_title": "Sales Dashboard",
+  "sections": [
+    {
+      "kpi": "monthly sales",
+      "widgets": [
+        {
+          "title": "Monthly Sales Trend",
+          "chart_type": "line",
+          "sql": "SELECT strftime('%Y-%m', InvoiceDate) AS Month, SUM(Total) AS Sales FROM invoices GROUP BY Month ORDER BY Month"
+        }
+      ]
+    }
+  ]
 }
 ```
 
-#### Response:
+#### 3. Backend Executes SQL
+
+For every widget, the backend:
+
+1. Executes the SQL query on the SQLite Chinook database
+2. Converts results into JSON rows
+3. Attaches data directly to the widget object
+
+Example widget with data attached:
+
 ```json
 {
-  "html": "<full dashboard html>",
-  "panel_count": 3,
-  "execution_time_ms": 1200,
-  "session_id": "test-123"
+  "title": "Monthly Sales Trend",
+  "chart_type": "line",
+  "sql": "SELECT ...",
+  "data": [
+    { "Month": "2025-01", "Sales": 1200 },
+    { "Month": "2025-02", "Sales": 1450 }
+  ]
 }
 ```
 
-### 👀 Preview Dashboard
-GET /dashboard/preview/{session_id}
+#### 4. Streamlit Renders Dashboard
 
-Open in browser to view rendered dashboard.
+The frontend dynamically renders each widget using Plotly:
 
-## Generated Output Dashboard
-input - 
-  "kpis": ["total revenue","monthly revenue","top customers","sales by country","top tracks","sales by genre","sales trend"]
-  
-![Project Screenshot](outputs/user-008/Screenshot_4-5-2026_174247_.jpeg)
+- **KPI cards** for single metric values
+- **Line charts** for trends over time
+- **Bar charts** for category comparisons
+- **Pie charts** for distribution breakdowns
+- **Tables** for raw tabular insights
 
-## 🧪 Test Cases (Multi-KPI Inputs)
+---
 
-The agent is designed to handle multiple KPI keywords (5–6 at once) and generate a complete dashboard in a single run.
+## 🤖 LLM Strategy
 
-🔹 1. Basic Mixed Dashboard
-["revenue", "customers", "invoices", "sales by country", "top customers"]
-🔹 2. Business Overview Dashboard
-["total revenue", "monthly sales", "top customers", "sales by country", "invoice count", "average invoice value"]
-🔹 3. Sales-Focused Dashboard
-["revenue over time", "top selling tracks", "sales by genre", "top customers", "revenue by country"]
-🔹 4. Customer Insights Dashboard
-["customer count", "top customers", "customers by country", "repeat customers", "average spend per customer"]
-🔹 5. Product / Music Analytics (Chinook-specific)
-["top tracks", "top artists", "sales by genre", "album performance", "track purchases", "revenue by artist"]
-🔹 6. Time-Series Heavy Dashboard
-["monthly revenue", "yearly sales trend", "invoice trend", "customer growth", "revenue over time"]
-🔹 7. Distribution + Ranking Mix
-["sales by country", "sales by genre", "top customers", "top tracks", "revenue distribution"]
-🔹 8. Stress Test (7 KPIs)
-["total revenue", "monthly revenue", "top customers", "sales by country", "top tracks", "sales by genre", "sales trend"]
-🔹 9. Synonym Robustness Test
-["income", "earnings", "client count", "purchases", "sales trend", "revenue distribution"]
-🔹 10. Noisy Input Test
-["revenue","abc xyz", "top customers", "???", "sales by country", "random metric"]
+### Single LLM Call Architecture
 
+The system is intentionally designed around **one LLM call** — no agent loops, no tool-calling, no LangChain.
 
-## 🖥️ Run Services Separately
+| Property       | Benefit                        |
+|----------------|--------------------------------|
+| Single call    | Fast response time             |
+| No agent loops | Predictable, reliable output   |
+| Minimal tokens | Lower cost per request         |
+| No frameworks  | Simple to maintain and debug   |
 
-### Setup (Do this once):
+### Prompt Engineering
+
+The LLM prompt enforces strict constraints to ensure safe, usable output:
+
+- SQLite-compatible SQL only
+- `SELECT`-only queries (no mutations)
+- Multiple widgets per KPI section
+- Business-friendly chart titles
+- Proper aggregations and groupings
+- No markdown fences or code blocks
+- Dashboard-ready JSON structure
+
+---
+
+## 📦 Supported Widget Types
+
+| Widget Type | Description                   |
+|-------------|-------------------------------|
+| `metric`    | Single KPI value card         |
+| `line`      | Trend visualization over time |
+| `bar`       | Category comparison chart     |
+| `pie`       | Distribution / share view     |
+| `table`     | Tabular data insights         |
+
+---
+
+## 🔌 API Reference
+
+### `POST /generate-dashboard`
+
+Generates a complete dashboard specification with data for the requested KPIs.
+
+**Request Body**
+
+```json
+{
+  "kpis": [
+    "monthly sales",
+    "top customers"
+  ]
+}
+```
+
+**Response**
+
+```json
+{
+  "dashboard_title": "Music Store Dashboard",
+  "sections": [
+    {
+      "kpi": "monthly sales",
+      "widgets": [
+        {
+          "title": "Monthly Sales Trend",
+          "chart_type": "line",
+          "sql": "SELECT ...",
+          "data": [...]
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## 🚀 Getting Started
+
+### 1. Install Dependencies
 
 ```bash
-# Activate virtual environment
-# Windows:
-.venv\Scripts\Activate.ps1
-
-# macOS/Linux:
-source venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
 ```
 
-### Terminal 1 - Backend:
-```bash
-# Activate venv (if not already)
-.venv\Scripts\Activate.ps1  # Windows
-# OR
-source venv/bin/activate  # macOS/Linux
+### 2. Configure Environment
 
-# Start backend
-uvicorn main:app --port 8000 --reload
+Create a `.env` file in the project root:
+
+```env
+OPENAI_API_KEY=your_key_here
+OPENAI_MODEL=gpt-4o-mini
+DB_PATH=db/chinook.db
 ```
 
-### Terminal 2 - Frontend:
-```bash
-# Activate venv (if not already)
-.venv\Scripts\Activate.ps1  # Windows
-# OR
-source venv/bin/activate  # macOS/Linux
+### 3. Run the FastAPI Backend
 
-# Start frontend
-streamlit run frontend/streamlit_app.py --server.port 8501
+```bash
+uvicorn main:app --reload
+```
+
+Backend runs at: [http://localhost:8000](http://localhost:8000)
+
+### 4. Run the Streamlit Frontend
+
+```bash
+streamlit run streamlit_app.py
+```
+
+Frontend runs at: [http://localhost:8501](http://localhost:8501)
+
+---
+
+## 💡 Example KPI Inputs
+
+Try any of the following in the Streamlit UI:
+
+```
+monthly sales
+top customers
+revenue by country
+top genres
+sales trend
+customer retention
 ```
 
 ---
 
-## 🌐 Access Your Application
+## 📄 License
 
-| Service | URL |
-|---------|-----|
-| **Frontend (UI)** | http://localhost:8501 |
-| **Backend (API)** | http://localhost:8000 |
-| **API Documentation** | http://localhost:8000/docs |
-
----
+This project is for educational and demonstration purposes using the [Chinook sample database](https://github.com/lerocha/chinook-database).
