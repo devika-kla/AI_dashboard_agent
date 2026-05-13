@@ -3,9 +3,10 @@ uvicorn
 streamlit
 openai
 langchain-openai
-langchain-community
 sqlalchemy
 pydantic
 plotly
 pandas
 python-dotenv
+langgraph
+pydantic-settings

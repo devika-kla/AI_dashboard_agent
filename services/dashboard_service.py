@@ -1,16 +1,22 @@
-from services.spec_generator import generate_dashboard_spec
-from services.sql_executor import run_widget_queries
+from core.graph import graph
+from services.schema_service import get_schema
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 def build_dashboard(kpis: list[str]):
-    logger.info("Starting dashboard generation")
 
-    logger.info(f"KPI list: {kpis}")
-    spec = generate_dashboard_spec(kpis)
+    initial_state = {
+        "kpis": kpis,
+        "schema": get_schema(),
+        "dashboard": {},
+        "error": None,
+    }
 
-    spec = run_widget_queries(spec)
-    logger.info("LLM response received")
-    return spec
+    result = graph.invoke(initial_state)
+
+    if result["error"]:
+        logger.error("Dashboard generation failed: %s", result["error"])
+    else:
+        return result["dashboard"]
