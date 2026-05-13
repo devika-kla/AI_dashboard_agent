@@ -1,18 +1,175 @@
 # 📊 AI KPI Dashboard Generator
+### LangGraph · FastAPI · Streamlit · OpenAI GPT · SQLite · Plotly
 
-An AI-powered dashboard generation system that converts natural language KPI requests into interactive, data-driven dashboards — powered by an LLM, a FastAPI backend, a Streamlit frontend, and the Chinook SQLite dataset.
+An AI-powered KPI dashboard generator that converts natural language requests into interactive, data-driven dashboards — orchestrated by a **LangGraph workflow**, powered by an OpenAI LLM, and rendered live in Streamlit.
 
 ---
 
 ## ✨ Features
 
 - **Natural language KPI input** — describe what you want to see, not how to query it
-- **Dynamic SQL generation** — LLM writes SQLite-compatible SELECT queries on the fly
-- **Single LLM call architecture** — fast, reliable, and cost-efficient (no agent loops)
-- **Multiple chart types per KPI** — line, bar, pie, metric cards, and tables
-- **Interactive Plotly visualizations** — rendered live in Streamlit
-- **FastAPI backend API** — clean REST endpoint for dashboard generation
-- **Lightweight & maintainable** — no LangChain, no tool-calling, minimal dependencies
+- **Single LLM call** — one prompt generates the full dashboard spec (no agent loops)
+- **Automatic SQL generation** — LLM writes SQLite-compatible `SELECT` queries on the fly
+- **Multi-chart dashboards** — at least 2–3 widgets per KPI: metric cards, trends, rankings
+- **LangGraph workflow** — explicit node graph with error routing
+- **Interactive Plotly charts** — rendered live in Streamlit
+- **FastAPI backend** — clean REST endpoint for dashboard generation
+- **SQLite integration** — uses the Chinook sample music store database
+
+---
+
+## 🏗️ Architecture
+
+```text
+User Input
+    ↓
+Streamlit Frontend
+    ↓
+FastAPI API
+    ↓
+LangGraph Workflow
+    ↓
+LLM Generates Dashboard Spec
+    ↓
+Route On Error (conditional edge)
+    ↓
+Execute SQL Queries
+    ↓
+Attach Data To Widgets
+    ↓
+Return Dashboard JSON
+    ↓
+Render Interactive Dashboard
+```
+
+## 🤖 LangGraph Workflow
+
+The application uses a **3-node LangGraph workflow** with a conditional error routing edge.
+
+### Agent Graph
+
+![LangGraph Agent Flow](langgraph_flow.jpg)
+
+```
+__start__
+    ↓
+generate_dashboard_spec
+    ↓
+route_on_error ──── error ──────────────→ __end__
+    │
+  success
+    ↓
+execute_dashboard_queries
+    ↓
+__end__
+```
+
+---
+
+### Node 1 — `generate_dashboard_spec`
+
+Responsible for:
+- Understanding KPI requests
+- Generating dashboard structure
+- Creating widget definitions
+- Generating SQLite `SELECT` queries
+- Retrying up to 3 times on JSON parse failure
+
+**Output:**
+
+```json
+{
+  "dashboard_title": "Music Store Dashboard",
+  "sections": [
+    {
+      "kpi": "monthly sales",
+      "widgets": [
+        {
+          "title": "Monthly Sales Trend",
+          "chart_type": "line",
+          "sql": "SELECT strftime('%Y-%m', InvoiceDate) AS Month, SUM(Total) AS Sales FROM invoices GROUP BY Month ORDER BY Month LIMIT 50"
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### conditional node — `route_on_error`
+
+A conditional function that:
+- Inspects `state["error"]`
+- Routes to `execute_dashboard_queries` on success
+- Routes directly to `__end__` if spec generation failed
+
+This node is rendered explicitly in the graph so the branching logic is visible in the diagram.
+
+---
+
+### Node 2 — `execute_dashboard_queries`
+
+Responsible for:
+- Executing SQL queries against SQLite
+- Fetching and formatting result rows as JSON
+- Appending `data` to each widget in-place
+
+**Final output:**
+
+```json
+{
+  "dashboard_title": "Music Store Dashboard",
+  "sections": [
+    {
+      "kpi": "monthly sales",
+      "widgets": [
+        {
+          "title": "Monthly Sales Trend",
+          "chart_type": "line",
+          "sql": "...",
+          "data": [
+            { "Month": "2020-01", "Sales": 37.62 },
+            { "Month": "2020-02", "Sales": 52.47 }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### LangGraph State
+
+```python
+class DashboardState(TypedDict):
+    kpis: List[str]
+    schema: str           # filtered schema subset, read-only after node 1
+    dashboard: Dict       # mutated in-place: spec → spec + data
+    error: Optional[str]  # surfaces failures without raising exceptions
+```
+
+---
+
+## 📊 Dashboard Output
+
+![Dashboard Output](kpi_dashboard_output.pdf)
+
+> See [`kpi_dashboard_output.pdf`](kpi_dashboard_output.pdf) for the full rendered dashboard example.
+
+---
+
+## 📦 Supported Widget Types
+
+| Widget Type | Description                    |
+|-------------|--------------------------------|
+| `metric`    | Single KPI value card          |
+| `line`      | Trend visualization over time  |
+| `bar`       | Category comparison chart      |
+| `pie`       | Distribution / share view      |
+| `table`     | Tabular data insights          |
 
 ---
 
@@ -22,6 +179,7 @@ An AI-powered dashboard generation system that converts natural language KPI req
 |-------------------|--------------------|
 | Frontend          | Streamlit          |
 | Backend API       | FastAPI            |
+| Workflow Engine   | LangGraph          |
 | LLM               | OpenAI GPT         |
 | Database          | SQLite (Chinook)   |
 | Visualization     | Plotly             |
@@ -30,172 +188,80 @@ An AI-powered dashboard generation system that converts natural language KPI req
 
 ---
 
-## 📁 Project Structure
+## 🗄️ Database
 
-```
-project/
-│
-├── api/
-│   └── routes.py
-│
-├── core/
-│   ├── prompts.py
-│   └── llm.py
-│
-├── db/
-│   └── chinook.db
-│
-├── models/
-│   └── dashboard_models.py
-│
-├── services/
-│   ├── dashboard_service.py
-│   ├── database_service.py
-│   └── schema_service.py
-│
-├── main.py
-├── config.py
-├── streamlit_app.py
-├── requirements.txt
-└── README.md
-```
+This project uses the [Chinook SQLite sample database](https://github.com/lerocha/chinook-database) — a music store dataset.
+
+**Main tables used:**
+
+| Table         | Description                        |
+|---------------|------------------------------------|
+| `Invoice`     | Customer purchase records          |
+| `InvoiceLine` | Line items per invoice             |
+| `Customer`    | Customer details and location      |
+| `Track`       | Song/track metadata                |
+| `Album`       | Album metadata                     |
+| `Artist`      | Artist names                       |
+| `Genre`       | Music genre classification         |
 
 ---
 
-## 🏗️ Architecture
+## 🚀 Getting Started
 
-### High-Level Flow
+### 1. Clone the repository
 
-```
-User (Streamlit UI)
-        ↓
-FastAPI Endpoint
-        ↓
-Dashboard Service
-        ↓
-OpenAI LLM
-        ↓
-Dashboard Spec (JSON)
-        ↓
-SQL Execution
-        ↓
-Data Injection
-        ↓
-Frontend Rendering
+```bash
+git clone <repo-url>
+cd project
 ```
 
-### Detailed Workflow
+### 2. Create a virtual environment
 
-#### 1. User Inputs KPIs
-
-The user types one or more KPIs into the Streamlit interface. Example:
-
-```
-monthly sales, top customers, revenue by country
+```bash
+python -m venv .venv
 ```
 
-The request is sent from Streamlit to the FastAPI backend.
+Activate it:
 
-#### 2. LLM Generates Dashboard Spec
+```bash
+# Windows
+.venv\Scripts\activate
 
-A **single LLM call** generates the complete dashboard specification, including:
-
-- Dashboard title
-- Sections (one per KPI)
-- Widgets (charts, metrics, tables)
-- Chart types
-- SQL queries
-
-Example LLM output:
-
-```json
-{
-  "dashboard_title": "Sales Dashboard",
-  "sections": [
-    {
-      "kpi": "monthly sales",
-      "widgets": [
-        {
-          "title": "Monthly Sales Trend",
-          "chart_type": "line",
-          "sql": "SELECT strftime('%Y-%m', InvoiceDate) AS Month, SUM(Total) AS Sales FROM invoices GROUP BY Month ORDER BY Month"
-        }
-      ]
-    }
-  ]
-}
+# Mac / Linux
+source .venv/bin/activate
 ```
 
-#### 3. Backend Executes SQL
+### 3. Install dependencies
 
-For every widget, the backend:
-
-1. Executes the SQL query on the SQLite Chinook database
-2. Converts results into JSON rows
-3. Attaches data directly to the widget object
-
-Example widget with data attached:
-
-```json
-{
-  "title": "Monthly Sales Trend",
-  "chart_type": "line",
-  "sql": "SELECT ...",
-  "data": [
-    { "Month": "2025-01", "Sales": 1200 },
-    { "Month": "2025-02", "Sales": 1450 }
-  ]
-}
+```bash
+pip install -r requirements.txt
 ```
 
-#### 4. Streamlit Renders Dashboard
+### 4. Configure environment variables
 
-The frontend dynamically renders each widget using Plotly:
+Create a `.env` file in the project root:
 
-- **KPI cards** for single metric values
-- **Line charts** for trends over time
-- **Bar charts** for category comparisons
-- **Pie charts** for distribution breakdowns
-- **Tables** for raw tabular insights
+```env
+OPENAI_API_KEY=your_key_here
+OPENAI_MODEL=gpt-4o-mini
+DB_PATH=db/chinook.db
+```
 
----
+### 5. Run the FastAPI backend
 
-## 🤖 LLM Strategy
+```bash
+uvicorn main:app --reload
+```
 
-### Single LLM Call Architecture
+Backend runs at: [http://localhost:8000](http://localhost:8000)
 
-The system is intentionally designed around **one LLM call** — no agent loops, no tool-calling, no LangChain.
+### 6. Run the Streamlit frontend
 
-| Property       | Benefit                        |
-|----------------|--------------------------------|
-| Single call    | Fast response time             |
-| No agent loops | Predictable, reliable output   |
-| Minimal tokens | Lower cost per request         |
-| No frameworks  | Simple to maintain and debug   |
+```bash
+streamlit run streamlit_app.py
+```
 
-### Prompt Engineering
-
-The LLM prompt enforces strict constraints to ensure safe, usable output:
-
-- SQLite-compatible SQL only
-- `SELECT`-only queries (no mutations)
-- Multiple widgets per KPI section
-- Business-friendly chart titles
-- Proper aggregations and groupings
-- No markdown fences or code blocks
-- Dashboard-ready JSON structure
-
----
-
-## 📦 Supported Widget Types
-
-| Widget Type | Description                   |
-|-------------|-------------------------------|
-| `metric`    | Single KPI value card         |
-| `line`      | Trend visualization over time |
-| `bar`       | Category comparison chart     |
-| `pie`       | Distribution / share view     |
-| `table`     | Tabular data insights         |
+Frontend runs at: [http://localhost:8501](http://localhost:8501)
 
 ---
 
@@ -205,18 +271,19 @@ The LLM prompt enforces strict constraints to ensure safe, usable output:
 
 Generates a complete dashboard specification with data for the requested KPIs.
 
-**Request Body**
+**Request:**
 
 ```json
 {
   "kpis": [
     "monthly sales",
-    "top customers"
+    "top customers",
+    "revenue by country"
   ]
 }
 ```
 
-**Response**
+**Response:**
 
 ```json
 {
@@ -239,42 +306,6 @@ Generates a complete dashboard specification with data for the requested KPIs.
 
 ---
 
-## 🚀 Getting Started
-
-### 1. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Configure Environment
-
-Create a `.env` file in the project root:
-
-```env
-OPENAI_API_KEY=your_key_here
-OPENAI_MODEL=gpt-4o-mini
-DB_PATH=db/chinook.db
-```
-
-### 3. Run the FastAPI Backend
-
-```bash
-uvicorn main:app --reload
-```
-
-Backend runs at: [http://localhost:8000](http://localhost:8000)
-
-### 4. Run the Streamlit Frontend
-
-```bash
-streamlit run streamlit_app.py
-```
-
-Frontend runs at: [http://localhost:8501](http://localhost:8501)
-
----
-
 ## 💡 Example KPI Inputs
 
 Try any of the following in the Streamlit UI:
@@ -283,9 +314,11 @@ Try any of the following in the Streamlit UI:
 monthly sales
 top customers
 revenue by country
-top genres
+top tracks
+genre popularity
+customer growth
 sales trend
-customer retention
+artist revenue
 ```
 
 ---
