@@ -156,6 +156,13 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+backend/venv/
+backend/.venv/
+backend/.env
+frontend/node_modules/
+frontend/.env
+frontend/.vite
+backend/.env
 
 # Spyder project settings
 .spyderproject
